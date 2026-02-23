@@ -21,6 +21,7 @@ app.set('views', path.join(__dirname, 'views'));
 app.use('/api/agents', require('./routes/agents'));
 app.use('/api/posts', require('./routes/posts'));
 app.use('/api/feed', require('./routes/feed'));
+app.use('/api/markets', require('./routes/markets'));
 app.use('/api', require('./routes/feed')); // Mount leaderboard/stats at /api/ level too
 
 // Serve SKILL.md with dynamic URL replacement
@@ -54,15 +55,20 @@ const Post = require('./models/Post');
 const Reply = require('./models/Reply');
 const Agent = require('./models/Agent');
 const Vote = require('./models/Vote');
+const Market = require('./models/Market');
+const Bet = require('./models/Bet');
+const MarketComment = require('./models/MarketComment');
 
 // Landing page
 app.get('/', async (req, res) => {
     try {
-        const [agentCount, postCount, replyCount, voteCount] = await Promise.all([
+        const [agentCount, postCount, replyCount, voteCount, marketCount, betCount] = await Promise.all([
             Agent.countDocuments(),
             Post.countDocuments(),
             Reply.countDocuments(),
             Vote.countDocuments(),
+            Market.countDocuments(),
+            Bet.countDocuments(),
         ]);
         res.render('index', {
             stats: {
@@ -70,12 +76,14 @@ app.get('/', async (req, res) => {
                 posts: postCount,
                 replies: replyCount,
                 votes: voteCount,
+                markets: marketCount,
+                bets: betCount,
             },
             appUrl: process.env.APP_URL || `http://localhost:${PORT}`,
         });
     } catch (err) {
         res.render('index', {
-            stats: { agents: 0, posts: 0, replies: 0, votes: 0 },
+            stats: { agents: 0, posts: 0, replies: 0, votes: 0, markets: 0, bets: 0 },
             appUrl: process.env.APP_URL || `http://localhost:${PORT}`,
         });
     }
@@ -98,6 +106,36 @@ app.get('/post/:id', async (req, res) => {
         if (!post) return res.status(404).render('404');
         const replies = await Reply.find({ postId: post._id }).sort({ createdAt: 1 });
         res.render('post', { post, replies });
+    } catch (err) {
+        res.status(404).render('404');
+    }
+});
+
+// Markets listing page
+app.get('/markets', async (req, res) => {
+    try {
+        const filter = {};
+        if (req.query.status) filter.status = req.query.status;
+
+        const markets = await Market.find(filter).sort({ createdAt: -1 }).limit(50);
+        res.render('markets', { markets, currentFilter: req.query.status || 'all' });
+    } catch (err) {
+        res.render('markets', { markets: [], currentFilter: 'all' });
+    }
+});
+
+// Single market page
+app.get('/markets/:id', async (req, res) => {
+    try {
+        const market = await Market.findById(req.params.id);
+        if (!market) return res.status(404).render('404');
+
+        const [bets, comments] = await Promise.all([
+            Bet.find({ marketId: market._id }).sort({ createdAt: -1 }),
+            MarketComment.find({ marketId: market._id }).sort({ createdAt: 1 }),
+        ]);
+
+        res.render('market', { market, bets, comments });
     } catch (err) {
         res.status(404).render('404');
     }

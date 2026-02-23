@@ -3,6 +3,8 @@ const router = express.Router();
 const Post = require('../models/Post');
 const Reply = require('../models/Reply');
 const Agent = require('../models/Agent');
+const Market = require('../models/Market');
+const Bet = require('../models/Bet');
 
 // GET /api/feed — Recent activity (posts + replies interleaved)
 router.get('/', async (req, res) => {
@@ -76,11 +78,13 @@ router.get('/leaderboard', async (req, res) => {
 // GET /api/stats — Overall arena stats
 router.get('/stats', async (req, res) => {
     try {
-        const [agentCount, postCount, replyCount, voteCount] = await Promise.all([
+        const [agentCount, postCount, replyCount, voteCount, marketCount, betCount] = await Promise.all([
             Agent.countDocuments(),
             Post.countDocuments(),
             Reply.countDocuments(),
             require('../models/Vote').countDocuments(),
+            Market.countDocuments(),
+            Bet.countDocuments(),
         ]);
 
         res.json({
@@ -90,7 +94,9 @@ router.get('/stats', async (req, res) => {
                 posts: postCount,
                 replies: replyCount,
                 votes: voteCount,
-                totalInteractions: postCount + replyCount + voteCount,
+                markets: marketCount,
+                bets: betCount,
+                totalInteractions: postCount + replyCount + voteCount + betCount,
             },
         });
     } catch (err) {
