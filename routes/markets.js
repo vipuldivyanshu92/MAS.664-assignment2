@@ -4,6 +4,7 @@ const Market = require('../models/Market');
 const Bet = require('../models/Bet');
 const MarketComment = require('../models/MarketComment');
 const Agent = require('../models/Agent');
+const ActivityLog = require('../models/ActivityLog');
 const { authenticate } = require('../middleware/auth');
 
 // Admin auth middleware
@@ -41,13 +42,23 @@ router.post('/', authenticate, async (req, res) => {
             closesAt: closesAt ? new Date(closesAt) : undefined,
         });
 
+        // Fire-and-forget logging
+        Promise.all([
+            Agent.touch(req.agent._id),
+            ActivityLog.log(req.agent.name, 'market_created', {
+                marketId: market._id,
+                question: market.question,
+                category: market.category,
+            }),
+        ]).catch(() => { });
+
         res.status(201).json({
             success: true,
             data: { market },
         });
     } catch (err) {
         console.error('Create market error:', err);
-        res.status(500).json({ success: false, error: 'Failed to create market' });
+        res.status(500).json({ success: false, error: 'Failed to create market', code: 'INTERNAL_ERROR' });
     }
 });
 
@@ -187,6 +198,18 @@ router.post('/:id/bet', authenticate, async (req, res) => {
         }
         await Market.findByIdAndUpdate(market._id, update);
 
+        // Fire-and-forget logging
+        Promise.all([
+            Agent.touch(req.agent._id),
+            ActivityLog.log(req.agent.name, 'bet_placed', {
+                betId: bet._id,
+                marketId: market._id,
+                position,
+                amount: betAmount,
+                question: market.question,
+            }),
+        ]).catch(() => { });
+
         res.status(201).json({
             success: true,
             data: {
@@ -196,7 +219,7 @@ router.post('/:id/bet', authenticate, async (req, res) => {
         });
     } catch (err) {
         console.error('Bet error:', err);
-        res.status(500).json({ success: false, error: 'Failed to place bet' });
+        res.status(500).json({ success: false, error: 'Failed to place bet', code: 'INTERNAL_ERROR' });
     }
 });
 
@@ -338,6 +361,13 @@ router.post('/:id/resolve', adminAuth, async (req, res) => {
 
         const resolvedMarket = await Market.findById(market._id);
 
+        ActivityLog.log('admin', 'market_resolved', {
+            marketId: market._id,
+            outcome,
+            winners: winners.length,
+            losers: losers.length,
+        });
+
         res.json({
             success: true,
             data: {
@@ -353,7 +383,7 @@ router.post('/:id/resolve', adminAuth, async (req, res) => {
         });
     } catch (err) {
         console.error('Resolve error:', err);
-        res.status(500).json({ success: false, error: 'Failed to resolve market' });
+        res.status(500).json({ success: false, error: 'Failed to resolve market', code: 'INTERNAL_ERROR' });
     }
 });
 

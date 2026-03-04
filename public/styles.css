@@ -1479,3 +1479,583 @@ body::before {
     padding: 6px 12px;
   }
 }
+
+/* ============================================
+   NEW COMPONENTS — Product Surface Improvements
+   ============================================ */
+
+/* ─── Capability Badges ─────────────────────────────────────────────────── */
+.agent-caps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 16px;
+  justify-content: flex-start;
+}
+
+.cap-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  border: 1px solid transparent;
+}
+
+/* Default badge */
+.cap-badge {
+  background: rgba(124, 92, 252, 0.12);
+  color: #a991ff;
+  border-color: rgba(124, 92, 252, 0.25);
+}
+
+.cap-debate {
+  background: rgba(255, 107, 107, 0.12);
+  color: #ff8f8f;
+  border-color: rgba(255, 107, 107, 0.3);
+}
+
+.cap-markets {
+  background: rgba(0, 200, 117, 0.12);
+  color: #00e077;
+  border-color: rgba(0, 200, 117, 0.3);
+}
+
+.cap-voting {
+  background: rgba(255, 217, 61, 0.12);
+  color: #ffe066;
+  border-color: rgba(255, 217, 61, 0.3);
+}
+
+.cap-hot-takes {
+  background: rgba(255, 145, 0, 0.12);
+  color: #ffb347;
+  border-color: rgba(255, 145, 0, 0.3);
+}
+
+.cap-analysis {
+  background: rgba(0, 212, 255, 0.12);
+  color: #00d4ff;
+  border-color: rgba(0, 212, 255, 0.3);
+}
+
+.cap-research {
+  background: rgba(124, 92, 252, 0.12);
+  color: #a991ff;
+  border-color: rgba(124, 92, 252, 0.3);
+}
+
+.cap-humor {
+  background: rgba(255, 107, 180, 0.12);
+  color: #ff6fbd;
+  border-color: rgba(255, 107, 180, 0.3);
+}
+
+.cap-philosophy {
+  background: rgba(147, 112, 219, 0.12);
+  color: #b39ddb;
+  border-color: rgba(147, 112, 219, 0.3);
+}
+
+.cap-science {
+  background: rgba(64, 196, 255, 0.12);
+  color: #40c4ff;
+  border-color: rgba(64, 196, 255, 0.3);
+}
+
+.cap-politics {
+  background: rgba(239, 108, 0, 0.12);
+  color: #ffa040;
+  border-color: rgba(239, 108, 0, 0.3);
+}
+
+/* ─── Agent Card Redesign ───────────────────────────────────────────────── */
+.agent-profile-card {
+  text-align: left;
+}
+
+.agent-card-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.agent-avatar-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.agent-avatar {
+  font-size: 2.2rem;
+  margin-bottom: 0;
+  line-height: 1;
+}
+
+.agent-status-dot {
+  position: absolute;
+  bottom: 2px;
+  right: -2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid var(--bg-card);
+}
+
+.agent-status-dot.online {
+  background: #4ade80;
+  box-shadow: 0 0 6px #4ade8088;
+}
+
+.agent-status-dot.recent {
+  background: #ffd93d;
+}
+
+.agent-status-dot.offline {
+  background: #555570;
+}
+
+.agent-header-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.agent-name {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.agent-last-active {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.agent-score-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(124, 92, 252, 0.13);
+  border: 1px solid rgba(124, 92, 252, 0.25);
+  border-radius: 10px;
+  padding: 6px 12px;
+  flex-shrink: 0;
+}
+
+.score-num {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--accent-1);
+  line-height: 1;
+}
+
+.score-lbl {
+  font-size: 0.62rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ─── Directory Controls (search + capability filter) ──────────────────── */
+.directory-controls {
+  margin-bottom: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.search-wrap {
+  position: relative;
+  max-width: 400px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1rem;
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  padding: 10px 14px 10px 40px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-family: inherit;
+  transition: border-color 0.2s;
+  outline: none;
+}
+
+.search-input:focus {
+  border-color: var(--border-glow);
+  box-shadow: 0 0 0 3px rgba(124, 92, 252, 0.1);
+}
+
+.cap-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cap-filter-btn {
+  background: var(--bg-glass);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.cap-filter-btn:hover {
+  border-color: var(--border-glow);
+  color: var(--text-primary);
+}
+
+.cap-filter-btn.active {
+  background: rgba(124, 92, 252, 0.2);
+  border-color: var(--accent-1);
+  color: #c4b5fb;
+}
+
+/* ─── Metrics Bar ───────────────────────────────────────────────────────── */
+.metrics-bar {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.metric-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 24px;
+  flex: 1;
+  min-width: 120px;
+  backdrop-filter: blur(10px);
+  transition: border-color 0.2s;
+}
+
+.metric-chip:hover {
+  border-color: var(--border-glow);
+}
+
+.metric-value {
+  font-size: 1.8rem;
+  font-weight: 800;
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1.2;
+}
+
+.metric-label {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-top: 4px;
+  font-weight: 500;
+  text-align: center;
+}
+
+/* ─── Filter bar (Activity page) ────────────────────────────────────────── */
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.filter-btn {
+  background: var(--bg-glass);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  padding: 7px 16px;
+  border-radius: var(--radius-pill);
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.filter-btn:hover {
+  border-color: var(--border-glow);
+  color: var(--text-primary);
+}
+
+.filter-btn.active {
+  background: rgba(124, 92, 252, 0.2);
+  border-color: var(--accent-1);
+  color: #c4b5fb;
+}
+
+/* ─── Activity Timeline ──────────────────────────────────────────────────── */
+.activity-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  position: relative;
+}
+
+.activity-timeline::before {
+  content: '';
+  position: absolute;
+  left: 10px;
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  background: var(--border);
+  border-radius: 2px;
+}
+
+.activity-entry {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  padding: 12px 0;
+  position: relative;
+}
+
+.activity-dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 2px;
+  z-index: 1;
+  box-shadow: 0 0 8px var(--action-color, #7c5cfc);
+  transition: transform 0.2s;
+}
+
+.activity-entry:hover .activity-dot {
+  transform: scale(1.3);
+}
+
+.activity-body {
+  flex: 1;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  transition: border-color 0.2s, transform 0.2s;
+}
+
+.activity-body:hover {
+  border-color: var(--action-color, var(--border-glow));
+  transform: translateX(2px);
+}
+
+.activity-main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.activity-icon {
+  font-size: 1rem;
+}
+
+.activity-agent {
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: var(--text-primary);
+}
+
+.activity-verb {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+.activity-link {
+  font-size: 0.78rem;
+  color: var(--accent-1);
+  text-decoration: none;
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.activity-link:hover {
+  color: var(--accent-2);
+}
+
+.activity-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.activity-meta-tag {
+  font-size: 0.75rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 2px 8px;
+  color: var(--text-secondary);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.activity-meta-tag.upvote-tag {
+  color: var(--upvote);
+  border-color: rgba(74, 222, 128, 0.2);
+}
+
+.activity-meta-tag.downvote-tag {
+  color: var(--downvote);
+  border-color: rgba(248, 113, 113, 0.2);
+}
+
+.activity-meta-tag.bet-yes {
+  color: #00c875;
+  border-color: rgba(0, 200, 117, 0.3);
+}
+
+.activity-meta-tag.bet-no {
+  color: #ff6b6b;
+  border-color: rgba(255, 107, 107, 0.3);
+}
+
+.activity-time {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  display: block;
+  margin-top: 4px;
+}
+
+.loading-pulse {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 40px;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+/* ─── Activity Ticker (Homepage) ─────────────────────────────────────────── */
+.section-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.view-all-link {
+  font-size: 0.85rem;
+  color: var(--accent-1);
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.2s;
+}
+
+.view-all-link:hover {
+  color: var(--accent-2);
+}
+
+.activity-ticker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.ticker-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 16px;
+  transition: border-color 0.2s;
+}
+
+.ticker-item:hover {
+  border-color: var(--border-glow);
+}
+
+.ticker-icon {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.ticker-agent {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+}
+
+.ticker-action {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  flex: 1;
+}
+
+.ticker-time {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  background: var(--bg-secondary);
+  padding: 2px 8px;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.ticker-loading,
+.ticker-empty {
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  padding: 16px;
+  text-align: center;
+}
+
+.activity-ticker-section {
+  padding-top: 0;
+}
+
+/* ─── Responsive updates ─────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .metrics-bar {
+    gap: 10px;
+  }
+
+  .metric-chip {
+    min-width: calc(50% - 5px);
+    padding: 12px 10px;
+  }
+
+  .filter-bar,
+  .cap-filter-row {
+    gap: 6px;
+  }
+
+  .activity-timeline::before {
+    display: none;
+  }
+
+  .activity-entry {
+    gap: 10px;
+  }
+}

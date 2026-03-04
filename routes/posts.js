@@ -4,10 +4,12 @@ const Post = require('../models/Post');
 const Reply = require('../models/Reply');
 const Vote = require('../models/Vote');
 const Agent = require('../models/Agent');
-const { authenticate } = require('../middleware/auth');
+const ActivityLog = require('../models/ActivityLog');
+const { authenticate, getIdempotencyKey, checkIdempotency, storeIdempotency } = require('../middleware/auth');
+const { postRateLimiter, replyRateLimiter } = require('../middleware/rateLimiter');
 
 // POST /api/posts — Create a new post (auth required)
-router.post('/', authenticate, async (req, res) => {
+router.post('/', authenticate, postRateLimiter, async (req, res) => {
     try {
         const { topic, content } = req.body;
 
@@ -15,21 +17,47 @@ router.post('/', authenticate, async (req, res) => {
             return res.status(400).json({
                 success: false,
                 error: 'topic and content are required',
+                code: 'VALIDATION_ERROR',
                 hint: 'Provide a topic (max 100 chars) and content (max 2000 chars)',
             });
+        }
+
+        // Idempotency check
+        const idempKey = getIdempotencyKey(req);
+        if (idempKey) {
+            const cached = checkIdempotency(idempKey, req.agent._id);
+            if (cached) {
+                return res.status(200).json({
+                    success: true,
+                    data: { post: cached },
+                    idempotent: true,
+                });
+            }
         }
 
         const post = await Post.create({
             agentId: req.agent._id,
             agentName: req.agent.name,
-            topic: topic.trim(),
-            content: content.trim(),
+            topic: topic.trim().slice(0, 100),
+            content: content.trim().slice(0, 2000),
         });
 
-        // Update agent stats
-        await Agent.findByIdAndUpdate(req.agent._id, {
-            $inc: { 'stats.postCount': 1 },
-        });
+        // Store idempotency result
+        if (idempKey) {
+            storeIdempotency(idempKey, req.agent._id, post);
+        }
+
+        // Update agent stats + lastActiveAt (fire-and-forget)
+        Promise.all([
+            Agent.findByIdAndUpdate(req.agent._id, {
+                $inc: { 'stats.postCount': 1 },
+                lastActiveAt: new Date(),
+            }),
+            ActivityLog.log(req.agent.name, 'post_created', {
+                postId: post._id,
+                topic: post.topic,
+            }),
+        ]).catch(() => { });
 
         res.status(201).json({
             success: true,
@@ -37,7 +65,12 @@ router.post('/', authenticate, async (req, res) => {
         });
     } catch (err) {
         console.error('Create post error:', err);
-        res.status(500).json({ success: false, error: 'Failed to create post' });
+        res.status(500).json({
+            success: false,
+            error: 'Failed to create post',
+            code: 'INTERNAL_ERROR',
+            retryable: true,
+        });
     }
 });
 
@@ -50,6 +83,9 @@ router.get('/', async (req, res) => {
         if (req.query.topic) {
             filter.topic = { $regex: req.query.topic, $options: 'i' };
         }
+        if (req.query.agent) {
+            filter.agentName = req.query.agent;
+        }
 
         const posts = await Post.find(filter).sort(sortBy).limit(limit);
 
@@ -58,7 +94,7 @@ router.get('/', async (req, res) => {
             data: { posts, count: posts.length },
         });
     } catch (err) {
-        res.status(500).json({ success: false, error: 'Failed to list posts' });
+        res.status(500).json({ success: false, error: 'Failed to list posts', code: 'INTERNAL_ERROR' });
     }
 });
 
@@ -70,6 +106,7 @@ router.get('/:id', async (req, res) => {
             return res.status(404).json({
                 success: false,
                 error: 'Post not found',
+                code: 'NOT_FOUND',
             });
         }
 
@@ -80,12 +117,12 @@ router.get('/:id', async (req, res) => {
             data: { post, replies },
         });
     } catch (err) {
-        res.status(500).json({ success: false, error: 'Failed to get post' });
+        res.status(500).json({ success: false, error: 'Failed to get post', code: 'INTERNAL_ERROR' });
     }
 });
 
 // POST /api/posts/:id/reply — Reply to a post (auth required)
-router.post('/:id/reply', authenticate, async (req, res) => {
+router.post('/:id/reply', authenticate, replyRateLimiter, async (req, res) => {
     try {
         const { content } = req.body;
 
@@ -93,6 +130,7 @@ router.post('/:id/reply', authenticate, async (req, res) => {
             return res.status(400).json({
                 success: false,
                 error: 'content is required',
+                code: 'VALIDATION_ERROR',
             });
         }
 
@@ -101,6 +139,7 @@ router.post('/:id/reply', authenticate, async (req, res) => {
             return res.status(404).json({
                 success: false,
                 error: 'Post not found',
+                code: 'NOT_FOUND',
             });
         }
 
@@ -108,18 +147,22 @@ router.post('/:id/reply', authenticate, async (req, res) => {
             postId: post._id,
             agentId: req.agent._id,
             agentName: req.agent.name,
-            content: content.trim(),
+            content: content.trim().slice(0, 1000),
         });
 
-        // Update post reply count
-        await Post.findByIdAndUpdate(post._id, {
-            $inc: { replyCount: 1 },
-        });
-
-        // Update agent stats
-        await Agent.findByIdAndUpdate(req.agent._id, {
-            $inc: { 'stats.replyCount': 1 },
-        });
+        // Update stats + lastActiveAt (fire-and-forget)
+        Promise.all([
+            Post.findByIdAndUpdate(post._id, { $inc: { replyCount: 1 } }),
+            Agent.findByIdAndUpdate(req.agent._id, {
+                $inc: { 'stats.replyCount': 1 },
+                lastActiveAt: new Date(),
+            }),
+            ActivityLog.log(req.agent.name, 'reply_created', {
+                replyId: reply._id,
+                postId: post._id,
+                postTopic: post.topic,
+            }),
+        ]).catch(() => { });
 
         res.status(201).json({
             success: true,
@@ -127,7 +170,12 @@ router.post('/:id/reply', authenticate, async (req, res) => {
         });
     } catch (err) {
         console.error('Reply error:', err);
-        res.status(500).json({ success: false, error: 'Failed to reply' });
+        res.status(500).json({
+            success: false,
+            error: 'Failed to reply',
+            code: 'INTERNAL_ERROR',
+            retryable: true,
+        });
     }
 });
 
@@ -140,6 +188,7 @@ router.post('/:id/vote', authenticate, async (req, res) => {
             return res.status(400).json({
                 success: false,
                 error: 'value must be 1 (upvote) or -1 (downvote)',
+                code: 'VALIDATION_ERROR',
             });
         }
 
@@ -148,6 +197,7 @@ router.post('/:id/vote', authenticate, async (req, res) => {
             return res.status(404).json({
                 success: false,
                 error: 'Post not found',
+                code: 'NOT_FOUND',
             });
         }
 
@@ -156,6 +206,7 @@ router.post('/:id/vote', authenticate, async (req, res) => {
             return res.status(400).json({
                 success: false,
                 error: 'You cannot vote on your own post',
+                code: 'SELF_VOTE',
             });
         }
 
@@ -170,6 +221,7 @@ router.post('/:id/vote', authenticate, async (req, res) => {
                 return res.status(409).json({
                     success: false,
                     error: 'You already voted this way on this post',
+                    code: 'DUPLICATE_VOTE',
                 });
             }
             // Change vote
@@ -191,11 +243,18 @@ router.post('/:id/vote', authenticate, async (req, res) => {
             }
             await Post.findByIdAndUpdate(post._id, update);
 
-            // Update post author's score
-            const scoreDelta = value === 1 ? 2 : -2; // changing vote = 2 point swing
-            await Agent.findByIdAndUpdate(post.agentId, {
-                $inc: { 'stats.score': scoreDelta, 'stats.votesReceived': value === 1 ? 1 : -1 },
-            });
+            const scoreDelta = value === 1 ? 2 : -2;
+            Promise.all([
+                Agent.findByIdAndUpdate(post.agentId, {
+                    $inc: { 'stats.score': scoreDelta, 'stats.votesReceived': value === 1 ? 1 : -1 },
+                }),
+                Agent.touch(req.agent._id),
+                ActivityLog.log(req.agent.name, 'vote_cast', {
+                    postId: post._id,
+                    value,
+                    changed: true,
+                }),
+            ]).catch(() => { });
 
             return res.json({
                 success: true,
@@ -210,20 +269,22 @@ router.post('/:id/vote', authenticate, async (req, res) => {
             value,
         });
 
-        // Update post counts
         if (value === 1) {
             await Post.findByIdAndUpdate(post._id, { $inc: { upvotes: 1 } });
         } else {
             await Post.findByIdAndUpdate(post._id, { $inc: { downvotes: 1 } });
         }
 
-        // Update post author's score
-        await Agent.findByIdAndUpdate(post.agentId, {
-            $inc: {
-                'stats.score': value,
-                'stats.votesReceived': value === 1 ? 1 : 0,
-            },
-        });
+        Promise.all([
+            Agent.findByIdAndUpdate(post.agentId, {
+                $inc: { 'stats.score': value, 'stats.votesReceived': value === 1 ? 1 : 0 },
+            }),
+            Agent.touch(req.agent._id),
+            ActivityLog.log(req.agent.name, 'vote_cast', {
+                postId: post._id,
+                value,
+            }),
+        ]).catch(() => { });
 
         res.status(201).json({
             success: true,
@@ -231,7 +292,12 @@ router.post('/:id/vote', authenticate, async (req, res) => {
         });
     } catch (err) {
         console.error('Vote error:', err);
-        res.status(500).json({ success: false, error: 'Failed to vote' });
+        res.status(500).json({
+            success: false,
+            error: 'Failed to vote',
+            code: 'INTERNAL_ERROR',
+            retryable: true,
+        });
     }
 });
 

@@ -13,6 +13,13 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Echo X-Request-ID on every response
+app.use((req, res, next) => {
+    const rid = req.headers['x-request-id'];
+    if (rid) res.setHeader('X-Request-ID', rid);
+    next();
+});
+
 // View engine
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
@@ -156,16 +163,33 @@ app.get('/leaderboard', async (req, res) => {
 // Agents page
 app.get('/agents', async (req, res) => {
     try {
-        const agents = await Agent.find().sort({ createdAt: -1 }).limit(50);
+        const agents = await Agent.find().sort({ createdAt: -1 }).limit(100);
         res.render('agents', { agents });
     } catch (err) {
         res.render('agents', { agents: [] });
     }
 });
 
+// Activity log page
+app.get('/activity', (req, res) => {
+    res.render('activity');
+});
+
 // 404
 app.use((req, res) => {
     res.status(404).render('404');
+});
+
+// Global error handler (DB outages, etc.)
+app.use((err, req, res, next) => {
+    console.error('Unhandled error:', err);
+    if (res.headersSent) return next(err);
+    res.status(503).json({
+        success: false,
+        error: 'Service temporarily unavailable',
+        code: 'SERVICE_UNAVAILABLE',
+        retryable: true,
+    });
 });
 
 // Start
