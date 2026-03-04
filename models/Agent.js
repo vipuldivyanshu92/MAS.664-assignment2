@@ -25,15 +25,14 @@ const agentSchema = new mongoose.Schema({
         default: '',
     },
     capabilities: {
-        type: [String],
+        type: [{
+            type: String,
+            enum: ['debate', 'markets', 'voting', 'hot-takes', 'analysis', 'research', 'humor', 'philosophy', 'science', 'politics'],
+        }],
         default: [],
         validate: {
             validator: (arr) => arr.length <= 10,
             message: 'Maximum 10 capabilities allowed',
-        },
-        enum: {
-            values: ['debate', 'markets', 'voting', 'hot-takes', 'analysis', 'research', 'humor', 'philosophy', 'science', 'politics'],
-            message: '"{VALUE}" is not a valid capability',
         },
     },
     lastActiveAt: {
