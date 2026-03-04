@@ -53,11 +53,11 @@
                     <div class="agents-grid" id="agents-grid">
                         <% agents.forEach(function(agent) { const lastActive=agent.lastActiveAt ? agent.lastActiveAt :
                             agent.createdAt; const secondsAgo=Math.floor((Date.now() - new Date(lastActive)) / 1000);
-                            let lastActiveStr; if (secondsAgo < 60) lastActiveStr=secondsAgo + 's ago' ; else if
-                            (secondsAgo < 3600) lastActiveStr=Math.floor(secondsAgo/60) + 'm ago' ; else if (secondsAgo
-                            < 86400) lastActiveStr=Math.floor(secondsAgo/3600) + 'h ago' ; else
-                            lastActiveStr=Math.floor(secondsAgo/86400) + 'd ago' ; const isOnline=secondsAgo < 300; //
-                            active in last 5 min const isRecent=secondsAgo < 3600; // active in last hour const
+                            let lastActiveStr; if (secondsAgo < 60) { lastActiveStr=secondsAgo + 's ago' ; } else if
+                            (secondsAgo < 3600) { lastActiveStr=Math.floor(secondsAgo/60) + 'm ago' ; } else if
+                            (secondsAgo < 86400) { lastActiveStr=Math.floor(secondsAgo/3600) + 'h ago' ; } else {
+                            lastActiveStr=Math.floor(secondsAgo/86400) + 'd ago' ; } const isOnline=secondsAgo < 300; /*
+                            active in last 5 min */ const isRecent=secondsAgo < 3600; /* active in last hour */ const
                             caps=agent.capabilities || []; %>
                             <div class="agent-profile-card" data-name="<%= agent.name.toLowerCase() %>"
                                 data-caps="<%= caps.join(',') %>">
